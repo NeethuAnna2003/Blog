@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Bloggers{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Our Bloggers</h1>
+            
+            <div class="row">
+                {% for blogger in bloggers %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if blogger.userprofile.profile_picture %}
+                        <img src="{{ blogger.userprofile.profile_picture.url }}" class="card-img-top profile-picture mx-auto mt-3" alt="{{ blogger.username }}">
+                        {% else %}
+                        <div class="text-center mt-3">
+                            <i class="fas fa-user-circle fa-5x text-secondary"></i>
+                        </div>
+                        {% endif %}
+                        <div class="card-body text-center">
+                            <h5 class="card-title">{{ blogger.username }}</h5>
+                            {% if blogger.userprofile.bio %}
+                            <p class="card-text">{{ blogger.userprofile.bio|truncatewords:30 }}</p>
+                            {% endif %}
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="{% url 'blog:blogger_detail' username=blogger.username %}" class="btn btn-primary">
+                                    View Posts
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        No bloggers found.
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

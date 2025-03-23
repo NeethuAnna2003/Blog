@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ post.title }}{% endblock %}
+
+{% block content %}
+<article class="blog-post">
+    <header class="mb-4">
+        <h1 class="display-4">{{ post.title }}</h1>
+        <div class="text-muted mb-3">
+            By <a href="{% url 'blog:blogger_detail' username=post.author.username %}">{{ post.author.username }}</a>
+            on {{ post.created_at|date:"F j, Y" }}
+        </div>
+        {% if post.featured_image %}
+        <img src="{{ post.featured_image.url }}" class="img-fluid rounded mb-4" alt="{{ post.title }}">
+        {% endif %}
+        <div class="mb-3">
+            {% for category in post.categories.all %}
+            <span class="badge bg-secondary">{{ category.name }}</span>
+            {% endfor %}
+        </div>
+    </header>
+
+    <div class="blog-post-content mb-5">
+        {{ post.content|linebreaks }}
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="reactions">
+            <button class="btn btn-outline-primary me-2 like-btn" data-post-id="{{ post.id }}">
+                <i class="fas fa-heart {% if user.is_authenticated and user in post.likes.all %}text-danger{% endif %}"></i>
+                <span class="likes-count">{{ post.get_likes_count }}</span>
+            </button>
+            <button class="btn btn-outline-secondary dislike-btn" data-post-id="{{ post.id }}">
+                <i class="fas fa-thumbs-down {% if user.is_authenticated and user in post.dislikes.all %}text-danger{% endif %}"></i>
+                <span class="dislikes-count">{{ post.get_dislikes_count }}</span>
+            </button>
+        </div>
+        {% if user == post.author %}
+        <div class="actions">
+            <a href="{% url 'blog:post_edit' slug=post.slug %}" class="btn btn-outline-primary me-2">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{% url 'blog:post_delete' slug=post.slug %}" class="btn btn-outline-danger">
+                <i class="fas fa-trash"></i> Delete
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <hr>
+
+    <section class="comments-section">
+        <h3 class="mb-4">Comments ({{ comments.count }})</h3>
+        
+        {% if user.is_authenticated %}
+        <form method="post" class="mb-4">
+            {% csrf_token %}
+            {{ comment_form|crispy }}
+            <button type="submit" class="btn btn-primary">Post Comment</button>
+        </form>
+        {% else %}
+        <div class="alert alert-info">
+            Please <a href="{% url 'login' %}">log in</a> to leave a comment.
+        </div>
+        {% endif %}
+
+        <div class="comments-list">
+            {% for comment in comments %}
+            <div class="comment mb-3" id="comment-{{ comment.id }}">
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        {% if comment.author.profile.profile_picture %}
+                        <img src="{{ comment.author.profile.profile_picture.url }}" class="rounded-circle" width="40" height="40" alt="{{ comment.author.username }}">
+                        {% else %}
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            {{ comment.author.username|first|upper }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="d-flex justify-content-between">
+                            <h5 class="mb-1">{{ comment.author.username }}</h5>
+                            <small class="text-muted">{{ comment.created_at|date:"F j, Y, g:i a" }}</small>
+                        </div>
+                        <p class="mb-1">{{ comment.content }}</p>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted">No comments yet. Be the first to comment!</p>
+            {% endfor %}
+        </div>
+    </section>
+</article>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const likeBtn = document.querySelector('.like-btn');
+    const dislikeBtn = document.querySelector('.dislike-btn');
+    const likesCount = document.querySelector('.likes-count');
+    const dislikesCount = document.querySelector('.dislikes-count');
+    const likeIcon = likeBtn.querySelector('i');
+    const dislikeIcon = dislikeBtn.querySelector('i');
+
+    function updateReactionUI(response) {
+        likesCount.textContent = response.likes_count;
+        dislikesCount.textContent = response.dislikes_count;
+        
+        if (response.liked) {
+            likeIcon.classList.add('text-danger');
+            dislikeIcon.classList.remove('text-danger');
+        } else {
+            likeIcon.classList.remove('text-danger');
+        }
+        
+        if (response.disliked) {
+            dislikeIcon.classList.add('text-danger');
+            likeIcon.classList.remove('text-danger');
+        } else {
+            dislikeIcon.classList.remove('text-danger');
+        }
+    }
+
+    function handleReactionError(error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    }
+
+    likeBtn.addEventListener('click', function() {
+        if (!{{ user.is_authenticated|lower }}) {
+            window.location.href = "{% url 'login' %}";
+            return;
+        }
+
+        fetch("{% url 'blog:like_post' slug=post.slug %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => updateReactionUI(data))
+        .catch(handleReactionError);
+    });
+
+    dislikeBtn.addEventListener('click', function() {
+        if (!{{ user.is_authenticated|lower }}) {
+            window.location.href = "{% url 'login' %}";
+            return;
+        }
+
+        fetch("{% url 'blog:dislike_post' slug=post.slug %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => updateReactionUI(data))
+        .catch(handleReactionError);
+    });
+});
+</script>
+{% endblock %} 

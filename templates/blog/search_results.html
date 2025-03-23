@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Search Results</h1>
+            
+            {% if query %}
+            <div class="alert alert-info">
+                Showing results for: <strong>"{{ query }}"</strong>
+            </div>
+            {% endif %}
+
+            {% if posts %}
+            <div class="row">
+                {% for post in posts %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 post-card">
+                        {% if post.featured_image %}
+                        <img src="{{ post.featured_image.url }}" class="card-img-top" alt="{{ post.title }}" style="height: 200px; object-fit: cover;">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ post.title }}</h5>
+                            <p class="card-text text-muted">
+                                By <a href="{% url 'blog:blogger_detail' username=post.author.username %}">{{ post.author.username }}</a>
+                                on {{ post.created_at|date:"F j, Y" }}
+                            </p>
+                            <div class="mb-3">
+                                {% for category in post.categories.all %}
+                                <span class="badge bg-secondary">{{ category.name }}</span>
+                                {% endfor %}
+                            </div>
+                            <p class="card-text">{{ post.content|truncatewords:30 }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{% url 'blog:post_detail' slug=post.slug %}" class="btn btn-outline-primary">Read More</a>
+                                <div class="text-muted">
+                                    <i class="fas fa-comments"></i> {{ post.comments.count }}
+                                    <i class="fas fa-heart ms-2"></i> {{ post.get_likes_count }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                No posts found matching your search criteria.
+            </div>
+            {% endif %}
+
+            <div class="mt-4">
+                <a href="{% url 'blog:blog_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to All Posts
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ blogger.username }}'s Profile{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Blogger Profile Section -->
+    <div class="row mb-4">
+        <div class="col-md-4 text-center">
+            {% if blogger.profile.profile_picture %}
+            <img src="{{ blogger.profile.profile_picture.url }}" alt="{{ blogger.username }}'s profile" class="profile-picture mb-3">
+            {% else %}
+            <div class="profile-picture mb-3 bg-secondary rounded-circle d-flex align-items-center justify-content-center mx-auto">
+                <i class="fas fa-user fa-3x text-white"></i>
+            </div>
+            {% endif %}
+            <h2>{{ blogger.username }}</h2>
+            {% if blogger.profile.bio %}
+            <p class="text-muted">{{ blogger.profile.bio }}</p>
+            {% endif %}
+            {% if blogger.profile.website %}
+            <a href="{{ blogger.profile.website }}" class="btn btn-outline-primary" target="_blank">
+                <i class="fas fa-globe"></i> Website
+            </a>
+            {% endif %}
+        </div>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">About</h3>
+                    {% if blogger.profile.bio %}
+                    <p class="card-text">{{ blogger.profile.bio }}</p>
+                    {% else %}
+                    <p class="card-text text-muted">No bio available.</p>
+                    {% endif %}
+                    <p class="card-text">
+                        <small class="text-muted">
+                            Member since {{ blogger.date_joined|date:"F Y" }}
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blogger's Posts Section -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-4">Posts by {{ blogger.username }}</h3>
+            {% if posts %}
+            <div class="row">
+                {% for post in posts %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 post-card">
+                        {% if post.featured_image %}
+                        <img src="{{ post.featured_image.url }}" class="card-img-top" alt="{{ post.title }}" style="height: 200px; object-fit: cover;">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ post.title }}</h5>
+                            <p class="card-text text-muted">
+                                Posted on {{ post.created_at|date:"F j, Y" }}
+                            </p>
+                            <div class="mb-3">
+                                {% for category in post.categories.all %}
+                                <span class="badge bg-secondary">{{ category.name }}</span>
+                                {% endfor %}
+                            </div>
+                            <p class="card-text">{{ post.content|truncatewords:30 }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{% url 'blog:post_detail' slug=post.slug %}" class="btn btn-outline-primary">Read More</a>
+                                <div class="text-muted">
+                                    <i class="fas fa-comments"></i> {{ post.comments.count }}
+                                    <i class="fas fa-heart ms-2"></i> {{ post.get_likes_count }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                {{ blogger.username }} hasn't written any posts yet.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 
