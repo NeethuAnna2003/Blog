@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-your-secret-key-here'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = [".onrender.com"]
+ALLOWED_HOSTS = ["djangoblogss-adfdgre7degmdrev.canadacentral-01.azurewebsites.net",'127.0.0.1','localhost']
 
 
 # Application definition
